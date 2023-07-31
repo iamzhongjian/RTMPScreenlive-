@@ -30,7 +30,7 @@ public class AudioCodec extends Thread {
          */
         try {
             MediaFormat mediaFormat = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC,
-                    44100, 1);
+                    44100, 2);
             //编码规格，可以看成质量
             mediaFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
             //码率
