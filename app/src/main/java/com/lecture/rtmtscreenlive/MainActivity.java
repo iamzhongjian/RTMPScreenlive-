@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Used to load the 'native-lib' library on application startup.
 
-    String url = "rtmp://192.168.10.224/live/livestream";
+    //String url = "rtmp://192.168.10.224/live/livestream";
 
     EditText editText;
     private MediaProjectionManager mediaProjectionManager;
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
             mediaProjection = mediaProjectionManager.getMediaProjection
                     (resultCode, data);
             screenLive = new ScreenLive();
-            screenLive.startLive(url, mediaProjection);
+            screenLive.startLive(editText.getText().toString(), mediaProjection);
         }
     }
 
