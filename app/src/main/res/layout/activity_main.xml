@@ -9,7 +9,8 @@
     <EditText
         android:id="@+id/test_url"
         android:layout_width="match_parent"
-        android:layout_height="50dp" />
+        android:layout_height="50dp"
+        android:text="rtmp://192.168.124.58/live/test"/>
 
     <Button
         android:layout_width="match_parent"
