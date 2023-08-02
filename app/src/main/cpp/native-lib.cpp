@@ -223,10 +223,12 @@ Java_com_lecture_rtmtscreenlive_ScreenLive_connect(JNIEnv *env, jobject thiz, js
         if (!(ret = RTMP_ConnectStream(live->rtmp, 0))) break;
         LOGI("connect success");
     } while (0);
+    LOGI("\n---------------------connect free(live)---------------------\n");
     if (!ret && live) {
         free(live);
         live = nullptr;
     }
+    LOGI("\n---------------------connect end---------------------\n");
 
     env->ReleaseStringUTFChars(url_, url);
     return ret;
@@ -251,4 +253,18 @@ Java_com_lecture_rtmtscreenlive_ScreenLive_sendData(JNIEnv *env, jobject thiz, j
     }
     env->ReleaseByteArrayElements(data_, data, 0);
     return ret;
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_lecture_rtmtscreenlive_ScreenLive_closeRTMP(JNIEnv *env, jobject thiz) {
+    LOGI("native-lib========================================================RTMP_Close");
+
+//    if (live && live->rtmp != NULL) {
+//        RTMP_Close(live->rtmp);
+//        RTMP_Free(live->rtmp);
+//        live->rtmp = NULL;
+//    }
+
+    return TRUE;//记得return返回值
 }

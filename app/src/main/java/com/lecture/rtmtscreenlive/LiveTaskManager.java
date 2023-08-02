@@ -1,5 +1,7 @@
 package com.lecture.rtmtscreenlive;
 
+import android.util.Log;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -43,5 +45,16 @@ public class LiveTaskManager {
         THREAD_POOL_EXECUTOR.execute(runnable);
     }
 
+    //shutdown之后不能重启THREAD_POOL_EXECUTOR，否则java.util.concurrent.RejectedExecutionException
+    public void shutdown() {
+        Log.e("TAG","before isShutdown--->"+THREAD_POOL_EXECUTOR.isShutdown()+"---isTerminated--->"+THREAD_POOL_EXECUTOR.isTerminated()+"---isTerminating--->"+THREAD_POOL_EXECUTOR.isTerminating());
+        Log.e("TAG","before getTaskCount--->"+THREAD_POOL_EXECUTOR.getTaskCount()+"---getCompletedTaskCount--->"+THREAD_POOL_EXECUTOR.getCompletedTaskCount()+"---getActiveCount--->"+THREAD_POOL_EXECUTOR.getActiveCount());
+
+//        THREAD_POOL_EXECUTOR.shutdown();//有时候停止不了
+        THREAD_POOL_EXECUTOR.shutdownNow();//直接停止任务，报错InterruptedException但不崩溃
+
+        Log.e("TAG","after  isShutdown--->"+THREAD_POOL_EXECUTOR.isShutdown()+"---isTerminated--->"+THREAD_POOL_EXECUTOR.isTerminated()+"---isTerminating--->"+THREAD_POOL_EXECUTOR.isTerminating());
+        Log.e("TAG","after  getTaskCount--->"+THREAD_POOL_EXECUTOR.getTaskCount()+"---getCompletedTaskCount--->"+THREAD_POOL_EXECUTOR.getCompletedTaskCount()+"---getActiveCount--->"+THREAD_POOL_EXECUTOR.getActiveCount());
+    }
 
 }

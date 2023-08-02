@@ -121,7 +121,18 @@ public class AudioCodec extends Thread {
             }
 
         }
+        Log.e("TAG", "AudioCodec========================================================end");
         isRecording = false;
+        startTime = 0;
+        mediaCodec.stop();
+        mediaCodec.release();
+        mediaCodec = null;
+        audioRecord.stop();
+        audioRecord.release();
+        audioRecord = null;
+    }
 
+    public void stopLive(){
+        isRecording = false;
     }
 }

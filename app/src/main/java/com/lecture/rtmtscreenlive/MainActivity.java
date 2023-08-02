@@ -84,6 +84,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void stopLive(View view) {
-
+        Log.e("TAG","\n\n\n\n\n\n=====================================stopLive=====================================\n\n\n\n\n\n");
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+            Intent service = new Intent(this, ScreenRecordService.class);
+            stopService(service);//在service的onDestroy方法调用screenLive.stopLive()
+        }else{
+            screenLive.stopLive();
+        }
     }
 }

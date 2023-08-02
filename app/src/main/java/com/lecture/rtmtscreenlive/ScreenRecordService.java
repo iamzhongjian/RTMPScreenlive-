@@ -78,7 +78,8 @@ public class ScreenRecordService extends Service {
     @Override
     public void onDestroy() {//stopService会回调onDestroy方法
         super.onDestroy();
-        Log.e(TAG,"onDestroy--->");
+        Log.e(TAG,"onDestroy--->screenLive.stopLive()");
+        screenLive.stopLive();
         release();
     }
 
@@ -89,6 +90,7 @@ public class ScreenRecordService extends Service {
     }
 
     public void release(){
+        Log.e(TAG,"release---mediaProjection--->"+mediaProjection+"---virtualDisplay--->"+virtualDisplay);
         if (mediaProjection != null) {
             mediaProjection.stop();
             mediaProjection = null;

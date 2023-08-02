@@ -126,6 +126,13 @@ public class VideoCodec extends Thread {
         mediaProjection = null;
     }
 
+    public void stopLive(){
+        isLiving = false;
+
+        //ScreenLive里的stopLive()是必须的；已经关闭了线程池，加不加这句都行
+//        LiveTaskManager.getInstance().shutdown();
+    }
+
     public void writeBytes(byte[] array) {
         FileOutputStream writer = null;
         try {

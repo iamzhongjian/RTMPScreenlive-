@@ -53,6 +53,7 @@ public class ScreenLive extends Thread {
 //        isLiving = true;
         Log.i(TAG, "run: ----------->推送开始");
         while (isLiving) {
+            Log.i(TAG, "run: ----------->推送中 isLiving:"+isLiving);
             RTMPPackage rtmpPackage = null;
             try {
                 rtmpPackage = queue.take();
@@ -60,11 +61,36 @@ public class ScreenLive extends Thread {
                 e.printStackTrace();
             }
             Log.i(TAG, "取出数据");
-            if (rtmpPackage.getBuffer() != null && rtmpPackage.getBuffer().length != 0) {
+            if (rtmpPackage != null && rtmpPackage.getBuffer() != null && rtmpPackage.getBuffer().length != 0) {
                 Log.i(TAG, "ScreenLive run: ----------->推送 " + rtmpPackage.getBuffer().length + "   type:" + rtmpPackage.getType());
                 sendData(rtmpPackage.getBuffer(), rtmpPackage.getBuffer()
                         .length, rtmpPackage.getTms(), rtmpPackage.getType());
             }
+        }
+        Log.e(TAG, "ScreenLive========================================================end");
+        videoCodec.stopLive();
+        audioCodec.stopLive();
+
+        //放这也行
+//        closeRTMP();
+//        if(null != queue){
+//            Log.e(TAG, "ScreenLive===queue.size():"+queue.size()+"---queue.toString()--->"+queue.toString());
+//            queue.clear();
+//            queue = null;
+//        }
+    }
+
+    public void stopLive(){
+        Log.e(TAG, "ScreenLive===stopLive===queue:"+queue);
+        isLiving = false;
+        LiveTaskManager.getInstance().shutdown();
+
+        //放这也行
+        closeRTMP();
+        if(null != queue){
+            Log.e(TAG, "ScreenLive===stopLive===queue.size():"+queue.size()+"---queue.toString()--->"+queue.toString());
+            queue.clear();
+            queue = null;
         }
     }
 
@@ -73,4 +99,6 @@ public class ScreenLive extends Thread {
 
     //发送RTMP Data
     private native boolean sendData(byte[] data, int len, long tms, int type);
+
+    private native boolean closeRTMP();
 }
