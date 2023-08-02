@@ -29,6 +29,11 @@
         android:layout_height="wrap_content"
         android:onClick="test_thread_in_thread"
         android:text="测试子线程里的子线程" />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="test_stop_outer_thread"
+        android:text="停止外部子线程" />
 
 
 </LinearLayout>

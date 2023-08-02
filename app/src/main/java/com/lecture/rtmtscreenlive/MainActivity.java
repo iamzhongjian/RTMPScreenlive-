@@ -94,11 +94,58 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 测试结果：外部子线程的循环停了，但内部子线程还在运行
+     * 测试结果：外部子线程的循环停了，但内部子线程还在运行---两个子线程之间的生存期是相互独立的.它们只受主线程的影响.
      * @param view
      */
+//    public void test_thread_in_thread(View view) {
+//        boolean isInnerThreadStop = false;
+//
+//        //外部子线程
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                //内部子线程
+//                new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        //内部子线程的循环
+//                        while (!isInnerThreadStop){
+//                            Log.e("TAG","InnerThread currentThread().name:"+Thread.currentThread().getName());
+//                            try {
+//                                Thread.sleep(1000);
+//                            } catch (InterruptedException e) {
+//                                throw new RuntimeException(e);
+//                            }
+//                        }
+//                    }
+//                }).start();
+//
+//                //外部子线程的循环
+//                int outerThreadLoopCount = 0;
+//                boolean isOuterThreadStop = false;
+//                while (!isOuterThreadStop){
+//                    outerThreadLoopCount++;
+//                    if(outerThreadLoopCount > 5){//退出循环
+//                        isOuterThreadStop = true;
+//                    }
+//                    Log.e("TAG","OuterThread currentThread().name:"+Thread.currentThread().getName()+", outerThreadLoopCount:"+outerThreadLoopCount);
+//                    try {
+//                        Thread.sleep(1000);
+//                    } catch (InterruptedException e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                }
+//            }
+//        }).start();
+//    }
+
+    /**
+     * 测试结果：外部子线程isOuterThreadStop = true，打印OuterThread=============end，然后isInnerThreadStop = true，最后内部子线程InnerThread=============end
+     * TODO 这就奇怪了，ScreenLive里设置isLiving = false，并没有打印ScreenLive end，所以不会调用videoCodec.stopLive()，videoCodec就会一直运行
+     */
+    boolean isOuterThreadStop = false;
+    boolean isInnerThreadStop = false;
     public void test_thread_in_thread(View view) {
-        boolean isInnerThreadStop = false;
 
         //外部子线程
         new Thread(new Runnable() {
@@ -110,32 +157,42 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         //内部子线程的循环
                         while (!isInnerThreadStop){
-                            Log.e("TAG","InnerThread currentThread().name:"+Thread.currentThread().getName());
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
-                            }
+//                            Log.e("TAG","InnerThread currentThread().name:"+Thread.currentThread().getName());
+//                            try {
+//                                Thread.sleep(1000);
+//                            } catch (InterruptedException e) {
+//                                throw new RuntimeException(e);
+//                            }
                         }
+                        Log.e("TAG","InnerThread=============end");
                     }
                 }).start();
 
                 //外部子线程的循环
                 int outerThreadLoopCount = 0;
-                boolean isOuterThreadStop = false;
                 while (!isOuterThreadStop){
                     outerThreadLoopCount++;
-                    if(outerThreadLoopCount > 5){//退出循环
-                        isOuterThreadStop = true;
-                    }
-                    Log.e("TAG","OuterThread currentThread().name:"+Thread.currentThread().getName()+", outerThreadLoopCount:"+outerThreadLoopCount);
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+//                    Log.e("TAG","OuterThread currentThread().name:"+Thread.currentThread().getName()+", outerThreadLoopCount:"+outerThreadLoopCount);
+//                    try {
+//                        Thread.sleep(1000);
+//                    } catch (InterruptedException e) {
+//                        throw new RuntimeException(e);
+//                    }
                 }
+                Log.e("TAG","OuterThread=============end");
+                isInnerThreadStop = true;//调用后内部子线程的循环也停了
+
             }
         }).start();
     }
+
+    public void test_stop_outer_thread(View view) {
+//        isOuterThreadStop = true;
+
+//        isInnerThreadStop = true;
+
+        isOuterThreadStop = true;
+//        isInnerThreadStop = true;
+    }
+
 }

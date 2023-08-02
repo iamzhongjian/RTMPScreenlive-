@@ -87,6 +87,9 @@ public class VideoCodec extends Thread {
                     Log.e(TAG, "VideoCodec========BUFFER_FLAG_CODEC_CONFIG===配置相关的内容，也就是 SPS、PPS");
                 } else if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) { // 关键帧
                     Log.e(TAG, "VideoCodec========BUFFER_FLAG_KEY_FRAME===关键帧");
+                } else if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) { // mediaCodec.signalEndOfInputStream()调用后无法进入这里
+                    Log.e(TAG, "VideoCodec========BUFFER_FLAG_END_OF_STREAM");
+                    isLiving = false;
                 } else {// 非关键帧和SPS、PPS，可能是B帧或者P帧
                     Log.e(TAG, "VideoCodec========可能是B帧或者P帧");
                 }
@@ -128,6 +131,7 @@ public class VideoCodec extends Thread {
     }
 
     public void stopLive(){
+//        mediaCodec.signalEndOfInputStream();//调用后无法进入BUFFER_FLAG_END_OF_STREAM
         isLiving = false;
 
         //ScreenLive里的stopLive()是必须的；已经关闭了线程池，加不加这句都行
