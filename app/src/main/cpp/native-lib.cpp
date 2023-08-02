@@ -20,6 +20,7 @@ int sendPacket(RTMPPacket *packet) {
     int r = RTMP_SendPacket(live->rtmp, packet, 1);
     RTMPPacket_Free(packet);
     free(packet);
+    packet = nullptr;
     return r;
 }
 
@@ -90,6 +91,7 @@ RTMPPacket *createVideoPackage(int8_t *buf, int len, const long tms, Live *live)
 
 RTMPPacket *createVideoPackage(Live *live) {
     int body_size = 13 + live->sps_len + 3 + live->pps_len;
+    LOGI("createVideoPackage------body_size: %d",body_size);
     RTMPPacket *packet = (RTMPPacket *) malloc(sizeof(RTMPPacket));
     RTMPPacket_Alloc(packet, body_size);
     int i = 0;
@@ -103,6 +105,7 @@ RTMPPacket *createVideoPackage(Live *live) {
     packet->m_body[i++] = 0x00;
     //AVC sequence header
     packet->m_body[i++] = 0x01;   //configurationVersion 版本号 1
+    LOGI("createVideoPackage------live->sps[1]: %d,%c,%x",live->sps[1],live->sps[1],live->sps[1]);
     packet->m_body[i++] = live->sps[1]; //profile 如baseline、main、 high
 
     packet->m_body[i++] = live->sps[2]; //profile_compatibility 兼容性
@@ -135,12 +138,17 @@ RTMPPacket *createVideoPackage(Live *live) {
 
 int sendVideo(int8_t *buf, int len, long tms) {
     int ret;
+    LOGI("sendVideo======buf[0]:%x, buf[1]:%x, buf[2]:%x, buf[3]:%x, buf[4]:%x, buf[5]:%x",buf[0],buf[1],buf[2],buf[3],buf[4],buf[5]);//十六进制打印
+//    LOGI("sendVideo======buf[0]:%d, buf[1]:%d, buf[2]:%d, buf[3]:%d, buf[4]:%d, buf[5]:%d",buf[0],buf[1],buf[2],buf[3],buf[4],buf[5]);//101十六进制为65，代表关键帧；103十六进制为67，代表SPS、PPS
+//    LOGI("sendVideo======buf[0]:%c, buf[1]:%c, buf[2]:%c, buf[3]:%c, buf[4]:%c, buf[5]:%c",buf[0],buf[1],buf[2],buf[3],buf[4],buf[5]);
     if (buf[4] == 0x67) {//sps pps
+        LOGI("sendVideo======sps pps");
         if (live && (!live->pps || !live->sps)) {
             prepareVideo(buf, len, live);
         }
     } else {
         if (buf[4] == 0x65) {//关键帧 I 帧
+            LOGI("sendVideo======关键帧 I 帧");
             RTMPPacket *packet = createVideoPackage(live);//发送sps pps
             if (!(ret = sendPacket(packet))) {
             }

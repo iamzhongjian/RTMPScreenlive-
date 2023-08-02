@@ -45,6 +45,7 @@ public class AudioCodec extends Thread {
         //最小缓冲区大小
         minBufferSize = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
+        Log.e("TAG","minBufferSize--->"+minBufferSize);
         audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, 44100, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT, minBufferSize);
         audioRecord.startRecording();
@@ -71,6 +72,7 @@ public class AudioCodec extends Thread {
         while (isRecording) {
             //得到采集的声音数据
             int len = audioRecord.read(buffer, 0, buffer.length);
+            Log.e("TAG","buffer.length--->"+buffer.length+"---len--->"+len);
             if (len <= 0) {
                 continue;
             }
@@ -81,6 +83,7 @@ public class AudioCodec extends Thread {
             int index = mediaCodec.dequeueInputBuffer(0);
             if (index >= 0) {
                 ByteBuffer byteBuffer = mediaCodec.getInputBuffer(index);
+                Log.e("TAG","remaining--->"+byteBuffer.remaining()+"---limit--->"+byteBuffer.limit()+"---capacity--->"+byteBuffer.capacity());
                 byteBuffer.clear();
                 //把输入塞入容器
                 byteBuffer.put(buffer, 0, len);

@@ -71,6 +71,7 @@ public class VideoCodec extends Thread {
         while (isLiving) {
             //2000毫秒 手动触发输出关键帧
             if (System.currentTimeMillis() - timeStamp >= 2000) {
+                Log.e(TAG, "VideoCodec========手动触发输出关键帧 timeStamp: " + timeStamp);
                 Bundle params = new Bundle();
                 //立即刷新 让下一帧是关键帧
                 params.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
@@ -80,9 +81,18 @@ public class VideoCodec extends Thread {
             int index = mediaCodec.dequeueOutputBuffer(bufferInfo, 100000);
             Log.i(TAG, "VideoCodec run: " + index);
             if (index >= 0) {
+                // flags 利用位操作，定义的 flag 都是 2 的倍数
+                if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) { // 配置相关的内容，也就是 SPS、PPS
+                    Log.e(TAG, "VideoCodec========BUFFER_FLAG_CODEC_CONFIG===配置相关的内容，也就是 SPS、PPS");
+                } else if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) { // 关键帧
+                    Log.e(TAG, "VideoCodec========BUFFER_FLAG_KEY_FRAME===关键帧");
+                } else {// 非关键帧和SPS、PPS，可能是B帧或者P帧
+                    Log.e(TAG, "VideoCodec========可能是B帧或者P帧");
+                }
                 ByteBuffer buffer = mediaCodec.getOutputBuffer(index);
                 MediaFormat mediaFormat = mediaCodec.getOutputFormat(index);
-                Log.i(TAG, "mediaFormat: " + mediaFormat.toString());
+                Log.i(TAG, "VideoCodec========mediaFormat: " + mediaFormat.toString());
+                Log.e(TAG, "VideoCodec========bufferInfo.size: " + bufferInfo.size);
                 byte[] outData = new byte[bufferInfo.size];
                 buffer.get(outData);
                 if (startTime == 0) {
@@ -96,8 +106,15 @@ public class VideoCodec extends Thread {
                 rtmpPackage.setType(RTMPPackage.RTMP_PACKET_TYPE_VIDEO);
                 screenLive.addPackage(rtmpPackage);
                 mediaCodec.releaseOutputBuffer(index, false);
+            }else if(index == MediaCodec.INFO_TRY_AGAIN_LATER){
+                Log.e(TAG, "VideoCodec========INFO_TRY_AGAIN_LATER");
+            }else if(index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
+                Log.e(TAG, "VideoCodec========INFO_OUTPUT_FORMAT_CHANGED");
+            }else if(index == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED){
+                Log.e(TAG, "VideoCodec========INFO_OUTPUT_BUFFERS_CHANGED");
             }
         }
+        Log.e(TAG, "VideoCodec========================================================end");
         isLiving = false;
         startTime = 0;
         mediaCodec.stop();

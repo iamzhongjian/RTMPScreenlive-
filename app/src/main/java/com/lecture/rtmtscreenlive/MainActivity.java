@@ -11,6 +11,7 @@ import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
@@ -50,12 +51,23 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Log.e("TAG","onActivityResult resultCode--->"+resultCode+"---data--->"+data);
+
         if (requestCode == 100 && resultCode == Activity.RESULT_OK) {
 //         mediaProjection--->产生录屏数据
-            mediaProjection = mediaProjectionManager.getMediaProjection
-                    (resultCode, data);
-            screenLive = new ScreenLive();
-            screenLive.startLive(editText.getText().toString(), mediaProjection);
+            String mUrl = editText.getText().toString();
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+                Intent service = new Intent(this, ScreenRecordService.class);
+                service.putExtra("code", resultCode);
+                service.putExtra("data", data);
+                service.putExtra("url", mUrl);
+
+                startService(service);
+            }else{
+                mediaProjection = mediaProjectionManager.getMediaProjection(resultCode,data);
+                screenLive = new ScreenLive();
+                screenLive.startLive(mUrl, mediaProjection);
+            }
         }
     }
 

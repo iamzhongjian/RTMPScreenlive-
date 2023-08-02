@@ -28,6 +28,7 @@ public class ScreenLive extends Thread {
 
     public void addPackage(RTMPPackage rtmpPackage) {
         if (!isLiving) {
+            Log.i(TAG, "addPackage: ----------->return");
             return;
         }
         queue.add(rtmpPackage);
@@ -40,6 +41,7 @@ public class ScreenLive extends Thread {
             Log.i(TAG, "run: ----------->推送失败");
             return;
         }
+        isLiving = true;//放这里OK
 
         VideoCodec videoCodec = new VideoCodec(this);
         videoCodec.startLive(mediaProjection);
@@ -47,7 +49,9 @@ public class ScreenLive extends Thread {
         AudioCodec audioCodec = new AudioCodec(this);
         audioCodec.startLive();
 
-        isLiving = true;
+        //不能放这里，因为videoCodec先开始，然后addPackage，因为isLiving还是false，就return了，导致一开始的sps和pps数据没有发送（也就是sendData-sendVideo-prepareVideo没有执行）
+//        isLiving = true;
+        Log.i(TAG, "run: ----------->推送开始");
         while (isLiving) {
             RTMPPackage rtmpPackage = null;
             try {
