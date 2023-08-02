@@ -260,11 +260,12 @@ JNIEXPORT jboolean JNICALL
 Java_com_lecture_rtmtscreenlive_ScreenLive_closeRTMP(JNIEnv *env, jobject thiz) {
     LOGI("native-lib========================================================RTMP_Close");
 
-//    if (live && live->rtmp != NULL) {
-//        RTMP_Close(live->rtmp);
-//        RTMP_Free(live->rtmp);
-//        live->rtmp = NULL;
-//    }
+    if (live && live->rtmp != NULL) {
+        LOGI("native-lib========================================================RTMP_Close 方便二次推流");
+        RTMP_Close(live->rtmp);
+        RTMP_Free(live->rtmp);
+        live->rtmp = NULL;
+    }
 
     return TRUE;//记得return返回值
 }

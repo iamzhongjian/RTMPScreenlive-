@@ -92,4 +92,50 @@ public class MainActivity extends AppCompatActivity {
             screenLive.stopLive();
         }
     }
+
+    /**
+     * 测试结果：外部子线程的循环停了，但内部子线程还在运行
+     * @param view
+     */
+    public void test_thread_in_thread(View view) {
+        boolean isInnerThreadStop = false;
+
+        //外部子线程
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                //内部子线程
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //内部子线程的循环
+                        while (!isInnerThreadStop){
+                            Log.e("TAG","InnerThread currentThread().name:"+Thread.currentThread().getName());
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }
+                }).start();
+
+                //外部子线程的循环
+                int outerThreadLoopCount = 0;
+                boolean isOuterThreadStop = false;
+                while (!isOuterThreadStop){
+                    outerThreadLoopCount++;
+                    if(outerThreadLoopCount > 5){//退出循环
+                        isOuterThreadStop = true;
+                    }
+                    Log.e("TAG","OuterThread currentThread().name:"+Thread.currentThread().getName()+", outerThreadLoopCount:"+outerThreadLoopCount);
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }).start();
+    }
 }

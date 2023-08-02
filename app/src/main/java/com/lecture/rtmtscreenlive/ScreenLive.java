@@ -16,13 +16,15 @@ public class ScreenLive extends Thread {
     private LinkedBlockingQueue<RTMPPackage> queue = new LinkedBlockingQueue<>();
     private String url;
     private MediaProjection mediaProjection;
+    private VideoCodec videoCodec;
+    private AudioCodec audioCodec;
 
 
     public void startLive(String url, MediaProjection mediaProjection) {
         this.url = url;
         this.mediaProjection = mediaProjection;
-        LiveTaskManager.getInstance().execute(this);
-
+//        LiveTaskManager.getInstance().execute(this);
+        start();
     }
 
 
@@ -43,10 +45,10 @@ public class ScreenLive extends Thread {
         }
         isLiving = true;//放这里OK
 
-        VideoCodec videoCodec = new VideoCodec(this);
+        videoCodec = new VideoCodec(this);
         videoCodec.startLive(mediaProjection);
 
-        AudioCodec audioCodec = new AudioCodec(this);
+        audioCodec = new AudioCodec(this);
         audioCodec.startLive();
 
         //不能放这里，因为videoCodec先开始，然后addPackage，因为isLiving还是false，就return了，导致一开始的sps和pps数据没有发送（也就是sendData-sendVideo-prepareVideo没有执行）
@@ -68,8 +70,8 @@ public class ScreenLive extends Thread {
             }
         }
         Log.e(TAG, "ScreenLive========================================================end");
-        videoCodec.stopLive();
-        audioCodec.stopLive();
+//        videoCodec.stopLive();
+//        audioCodec.stopLive();
 
         //放这也行
 //        closeRTMP();
@@ -83,7 +85,9 @@ public class ScreenLive extends Thread {
     public void stopLive(){
         Log.e(TAG, "ScreenLive===stopLive===queue:"+queue);
         isLiving = false;
-        LiveTaskManager.getInstance().shutdown();
+//        LiveTaskManager.getInstance().shutdown();//shutdown之后不能重启，不能二次推流
+        videoCodec.stopLive();
+        audioCodec.stopLive();
 
         //放这也行
         closeRTMP();

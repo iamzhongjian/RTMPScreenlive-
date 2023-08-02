@@ -60,7 +60,8 @@ public class VideoCodec extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        LiveTaskManager.getInstance().execute(this);
+//        LiveTaskManager.getInstance().execute(this);
+        start();
     }
 
     @Override
