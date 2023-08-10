@@ -28,13 +28,26 @@ public class AudioCodec extends Thread {
         /**
          * 1、准备编码器
          */
+        /**
+         * 修改了编码器参数记得修改两个地方：
+         * 1.AudioSpecificConfig------audioObjectType,samplingFrequencyIndex,channelConfiguration,AOT Specific Config
+         * 2.packet->m_body[0]------SoundFormat,SoundRate,SoundSize,SoundType
+         */
+        int sampleRateInHz = 44100;
+        int channelCount = 2;
+        //最小缓冲区大小
+        minBufferSize = AudioRecord.getMinBufferSize(sampleRateInHz, channelCount == 2 ? AudioFormat.CHANNEL_IN_STEREO : AudioFormat.CHANNEL_IN_MONO,//由于改了编码器的channelCount为2，这里也要改
+                AudioFormat.ENCODING_PCM_16BIT);
+        Log.e("TAG","minBufferSize--->"+minBufferSize);
+
         try {
             MediaFormat mediaFormat = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC,
-                    44100, 2);
+                    sampleRateInHz, channelCount);
             //编码规格，可以看成质量
             mediaFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
             //码率
             mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, 64_000);
+            mediaFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, minBufferSize);//编码器要设置KEY_MAX_INPUT_SIZE，不然很容易会BufferOverflowException
             mediaCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC);
             mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         } catch (IOException e) {
@@ -42,11 +55,7 @@ public class AudioCodec extends Thread {
         }
 
         //创建AudioRecord 录音
-        //最小缓冲区大小
-        minBufferSize = AudioRecord.getMinBufferSize(44100, AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT);
-        Log.e("TAG","minBufferSize--->"+minBufferSize);
-        audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, 44100, AudioFormat.CHANNEL_IN_MONO,
+        audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRateInHz, channelCount == 2 ? AudioFormat.CHANNEL_IN_STEREO : AudioFormat.CHANNEL_IN_MONO,//由于改了编码器的channelCount为2，这里也要改
                 AudioFormat.ENCODING_PCM_16BIT, minBufferSize);
         audioRecord.startRecording();
         start();
@@ -58,9 +67,19 @@ public class AudioCodec extends Thread {
 
         mediaCodec.start();
 
+        /**
+         * AudioSpecificConfig：
+         * 十六进制：12       08
+         * 二进制：  00010010 00001000
+         * audioObjectType: 2  (5bits)编码器类型，比如2表示AAC-LC------00010
+         * samplingFrequencyIndex: 4  (4bits)采样率索引值，比如4表示44100------0100
+         * channelConfiguration: 1  (4bits)声道配置，比如1代表单声道，front-center------0001
+         * AOT Specific Config: (var bits)
+         */
         //在获取播放的音频数据之前，先发送 audio Special config
         RTMPPackage rtmpPackage = new RTMPPackage();
-        byte[] audioSpec = {0x12, 0x08};
+//        byte[] audioSpec = {0x12, 0x08};
+        byte[] audioSpec = {0x12, 0x10};//由于改了编码器的channelCount为2，这里也要改
         rtmpPackage.setBuffer(audioSpec);
         rtmpPackage.setType(RTMPPackage.RTMP_PACKET_TYPE_AUDIO_HEAD);
         rtmpPackage.setTms(0);
@@ -86,7 +105,7 @@ public class AudioCodec extends Thread {
                 Log.e("TAG","remaining--->"+byteBuffer.remaining()+"---limit--->"+byteBuffer.limit()+"---capacity--->"+byteBuffer.capacity());
                 byteBuffer.clear();
                 //把输入塞入容器
-                byteBuffer.put(buffer, 0, len);
+                byteBuffer.put(buffer, 0, len);//编码器要设置KEY_MAX_INPUT_SIZE，不然很容易会BufferOverflowException
 
                 //通知容器我们使用完了，你可以拿去编码了
                 // 时间戳： 微秒， nano纳秒/1000
