@@ -28,6 +28,9 @@ public class VideoCodec extends Thread {
     private VirtualDisplay virtualDisplay;//虚拟画布
     private long timeStamp;
     private long startTime;
+    public int width = 720;
+    public int height = 1280;
+    public int frameRate = 15;
 
     public VideoCodec(ScreenLive screenLive) {
         this.screenLive = screenLive;
@@ -37,13 +40,13 @@ public class VideoCodec extends Thread {
         this.mediaProjection = mediaProjection;
 
         MediaFormat format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC,
-                720,
-                1280);
+                width,
+                height);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                 MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         //码率，帧率，分辨率，关键帧间隔
         format.setInteger(MediaFormat.KEY_BIT_RATE, 400_000);
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, 15);
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
         try {
             mediaCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC);//手机
@@ -53,7 +56,7 @@ public class VideoCodec extends Thread {
 
             virtualDisplay = mediaProjection.createVirtualDisplay(
                     "screen-codec",
-                    720, 1280, 1,
+                    width, height, 1,
                     DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC,
                     surface, null, null);
 

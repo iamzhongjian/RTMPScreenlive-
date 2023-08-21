@@ -19,6 +19,14 @@ public class AudioCodec extends Thread {
     boolean isRecording;
     private int minBufferSize;
     long startTime;
+    /**
+     * 修改了编码器参数记得修改两个地方：
+     * 1.AudioSpecificConfig------audioObjectType,samplingFrequencyIndex,channelConfiguration,AOT Specific Config
+     * 2.packet->m_body[0]------SoundFormat,SoundRate,SoundSize,SoundType
+     */
+    public int sampleRateInHz = 44100;
+    public int sampleSize = 16;
+    public int channelCount = 2;
 
     public AudioCodec(ScreenLive screenLive) {
         this.screenLive = screenLive;
@@ -28,16 +36,9 @@ public class AudioCodec extends Thread {
         /**
          * 1、准备编码器
          */
-        /**
-         * 修改了编码器参数记得修改两个地方：
-         * 1.AudioSpecificConfig------audioObjectType,samplingFrequencyIndex,channelConfiguration,AOT Specific Config
-         * 2.packet->m_body[0]------SoundFormat,SoundRate,SoundSize,SoundType
-         */
-        int sampleRateInHz = 44100;
-        int channelCount = 2;
         //最小缓冲区大小
         minBufferSize = AudioRecord.getMinBufferSize(sampleRateInHz, channelCount == 2 ? AudioFormat.CHANNEL_IN_STEREO : AudioFormat.CHANNEL_IN_MONO,//由于改了编码器的channelCount为2，这里也要改
-                AudioFormat.ENCODING_PCM_16BIT);
+                sampleSize == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT);
         Log.e("TAG","minBufferSize--->"+minBufferSize);
 
         try {
@@ -56,7 +57,7 @@ public class AudioCodec extends Thread {
 
         //创建AudioRecord 录音
         audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRateInHz, channelCount == 2 ? AudioFormat.CHANNEL_IN_STEREO : AudioFormat.CHANNEL_IN_MONO,//由于改了编码器的channelCount为2，这里也要改
-                AudioFormat.ENCODING_PCM_16BIT, minBufferSize);
+                sampleSize == 16 ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT, minBufferSize);
         audioRecord.startRecording();
         start();
     }

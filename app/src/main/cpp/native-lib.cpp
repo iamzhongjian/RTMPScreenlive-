@@ -5,6 +5,7 @@
 
 extern "C" {
 #include "librtmp/rtmp.h"
+#include "script_metadata.h"
 }
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,"DDDDDD",__VA_ARGS__)
 typedef struct {
@@ -24,6 +25,79 @@ int sendPacket(RTMPPacket *packet) {
     return r;
 }
 
+/**
+ * https://blog.csdn.net/leixiaohua1020/article/details/42105049
+ * 最简单的基于librtmp的示例：发布H.264（H.264通过RTMP发布）
+ * SourceForge：https://sourceforge.net/projects/simplestlibrtmpexample/
+ * Github：https://github.com/leixiaohua1020/simplest_librtmp_example
+ * 开源中国：http://git.oschina.net/leixiaohua1020/simplest_librtmp_example
+ *
+ * https://github.com/leixiaohua1020/simplest_librtmp_example/blob/master/simplest_librtmp_send264/librtmp_send264.cpp
+ * 上面的代码并没有发送MetaData示例，下面有
+ * https://blog.csdn.net/firehood_/article/details/8783589
+ * https://blog.csdn.net/C1033177205/article/details/106966862/
+ */
+/**
+ * script metadata数据封包---不需要script tag的tag header那11个字节（即TagType,DataSize,TimeStamp,TimestampExtended,StreamId）
+ * MetaData这个消息可以发也可以不发，不发感觉拉流很慢
+ */
+RTMPPacket *createMetadataPackage(int width, int height, int framerate,
+                                  int audioSampleRate, int audioSampleSize, int audioChannels, Live *live) {
+    RTMPMetadata metaData;//ok
+    LOGI("createMetadataPackage()==========1==========sizeof(RTMPMetadata): %lu, sizeof(metaData): %lu", sizeof(RTMPMetadata),sizeof(metaData));//64---打印的是结构体里面类型长度的总字节数（struct内存对齐）
+    /**
+     * void *memset(void *s, int ch, size_t n);
+     * 函数解释：将s中当前位置后面的n个字节 （typedef unsigned int size_t ）用 ch 替换并返回 s
+     * memset：作用是在一段内存块中填充某个给定的值，它是对较大的结构体或数组进行清零操作的一种最快方法
+     */
+    memset(&metaData,0,sizeof(RTMPMetadata));//测试发现可以不需要memset
+    LOGI("createMetadataPackage()==========memset==========sizeof(RTMPMetadata): %lu, sizeof(metaData): %lu", sizeof(RTMPMetadata),sizeof(metaData));//64---打印的是结构体里面类型长度的总字节数（struct内存对齐）
+
+    //初始化结构体为0时，使用{}或者{0}或者memset
+//    RTMPMetadata metaData = {};//ok
+//    RTMPMetadata metaData = {0};//ok
+//    LOGI("createMetadataPackage()==========1==========sizeof(RTMPMetadata): %lu, sizeof(metaData): %lu", sizeof(RTMPMetadata),sizeof(metaData));//64---打印的是结构体里面类型长度的总字节数（struct内存对齐）
+
+    metaData.nWidth = width;
+    metaData.nHeight = height;
+    metaData.nFrameRate = framerate;
+    metaData.nAudioSampleRate = audioSampleRate;
+    metaData.nAudioSampleSize = audioSampleSize;
+    metaData.nAudioChannels = audioChannels;
+    LOGI("createMetadataPackage()==========2==========sizeof(RTMPMetadata): %lu, sizeof(metaData): %lu", sizeof(RTMPMetadata),sizeof(metaData));//64---打印的是结构体里面类型长度的总字节数（struct内存对齐）
+
+//    char *buf = CreateMetadata(&metaData);
+    ReturnValue returnValue = CreateMetadata(&metaData);
+    LOGI("createMetadataPackage()==========3==========sizeof(RTMPMetadata): %lu, sizeof(metaData): %lu", sizeof(RTMPMetadata),sizeof(metaData));//64---打印的是结构体里面类型长度的总字节数（struct内存对齐）
+
+    int body_size = returnValue.size;
+    int len = body_size;
+    LOGI("createMetadataPackage()====================body_size: %d, len: %d", body_size,len);
+    RTMPPacket *packet = (RTMPPacket *) malloc(sizeof(RTMPPacket));
+    RTMPPacket_Alloc(packet, body_size);
+    memcpy(&packet->m_body[0], returnValue.buf, len);
+
+    packet->m_packetType = RTMP_PACKET_TYPE_INFO;
+    packet->m_nChannel = 0x03;
+    packet->m_nBodySize = body_size;
+    packet->m_nTimeStamp = 0;
+    packet->m_hasAbsTimestamp = 0;
+    packet->m_headerType = RTMP_PACKET_SIZE_LARGE;
+    packet->m_nInfoField2 = live->rtmp->m_stream_id;
+    return packet;
+}
+
+/**
+ * C语言跟内存申请相关的函数主要有 alloca、calloc、malloc、free、realloc等.
+    <1>alloca是向栈申请内存,因此无需释放.
+    <2>malloc分配的内存是位于堆中的,并且没有初始化内存的内容,因此基本上malloc之后,调用函数memset来初始化这部分的内存空间.
+    <3>calloc则将初始化这部分的内存,设置为0.
+    <4>realloc则对malloc申请的内存进行大小的调整.
+    <5>申请的内存最终需要通过函数free来释放.
+    当程序运行过程中malloc了,但是没有free的话,会造成内存泄漏.一部分的内存没有被使用,
+    但是由于没有free,因此系统认为这部分内存还在使用,造成不断的向系统申请内存,使得系统可用内存不断减少.
+    但是内存泄漏仅仅指程序在运行时,程序退出时,OS将回收所有的资源.因此,适当的重起一下程序,有时候还是有点作用.
+ */
 void prepareVideo(int8_t *data, int len, Live *live) {
     for (int i = 0; i < len; i++) {
         //0x00 0x00 0x00 0x01
@@ -354,6 +428,17 @@ Java_com_lecture_rtmtscreenlive_ScreenLive_connect(JNIEnv *env, jobject thiz, js
     env->ReleaseStringUTFChars(url_, url);
     return ret;
 
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_lecture_rtmtscreenlive_ScreenLive_sendMetaData(JNIEnv *env, jobject thiz,
+                                                        jint width,jint height,jint framerate,
+                                                        jint audio_sample_rate,jint audio_sample_size,jint audio_channels) {
+    RTMPPacket *packet = createMetadataPackage(width,height,framerate,
+                                               audio_sample_rate,audio_sample_size,audio_channels,live);
+    int ret = sendPacket(packet);
+    return ret;
 }
 
 extern "C"

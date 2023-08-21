@@ -51,6 +51,10 @@ public class ScreenLive extends Thread {
         audioCodec = new AudioCodec(this);
         audioCodec.startLive();
 
+        boolean sendResult = sendMetaData(videoCodec.width,videoCodec.height,videoCodec.frameRate,
+                audioCodec.sampleRateInHz,audioCodec.sampleSize,audioCodec.channelCount);
+        Log.e(TAG, "run: ----------->推送MetaData结果:"+sendResult);
+
         //不能放这里，因为videoCodec先开始，然后addPackage，因为isLiving还是false，就return了，导致一开始的sps和pps数据没有发送（也就是sendData-sendVideo-prepareVideo没有执行）
 //        isLiving = true;
         Log.i(TAG, "run: ----------->推送开始");
@@ -101,6 +105,8 @@ public class ScreenLive extends Thread {
     //连接RTMP服务器
     private native boolean connect(String url);
 
+    private native boolean sendMetaData(int width, int height, int framerate,
+                                        int audioSampleRate, int audioSampleSize, int audioChannels);
     //发送RTMP Data
     private native boolean sendData(byte[] data, int len, long tms, int type);
 
