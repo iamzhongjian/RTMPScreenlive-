@@ -115,6 +115,17 @@ char * put_amf_double( char *c, double d )
     }
     return c+8;
 }
+char * put_amf_boolean( char *c,unsigned char *b )
+{
+    *c++ = AMF_BOOLEAN;//AMF_BOOLEAN占1 Byte，AMF_NUMBER占8 Byte
+    {
+        unsigned char *ci, *co;
+        ci = (unsigned char *)&b;
+        co = (unsigned char *)c;
+        co[0] = ci[0];//值占1 Byte
+    }
+    return c+1;
+}
 
 //打印char指针
 void print_char_pointer(char *c,int len){
@@ -236,13 +247,21 @@ ReturnValue CreateMetadata(LPRTMPMetadata lpMetaData)
     p = put_amf_double( p, lpMetaData->nAudioSampleRate );
     p = put_amf_string( p, "audiosamplesize" );
     p = put_amf_double( p, lpMetaData->nAudioSampleSize );
+
     p = put_amf_string( p, "stereo" );
-    p = put_amf_double( p, lpMetaData->nAudioChannels == 1 ? false : true );
+//    p = put_amf_double( p, lpMetaData->nAudioChannels == 1 ? false : true );//double也行，拉流端解析为double就行
+//    p = put_amf_boolean( p, lpMetaData->nAudioChannels == 1 ? (unsigned char *)0 : (unsigned char *)1 );//ok
+    *p++ = AMF_BOOLEAN;
+//    *p++ = lpMetaData->nAudioChannels == 1 ? false : true;//ok
+//    *p++ = lpMetaData->nAudioChannels == 1 ? 0 : 1;//ok
+    *p++ = lpMetaData->nAudioChannels == 1 ? 0x00 : 0x01;
+
     p = put_amf_string( p, "audiocodecid" );
     p = put_amf_double( p, FLV_CODECID_AAC );
 
-//    p = put_amf_string( p, "" );//这一句可以不要
-    p = put_byte( p, AMF_OBJECT_END  );
+    /* end of object - 0x00 0x00 0x09 */
+    p = put_amf_string( p, "" );//这一句要，这是两个0x00
+    p = put_byte( p, AMF_OBJECT_END  );//这只是一个字节0x09
 
     int index = p-body;//指针与指针相减，得出的结果为：两者之间的距离！
 
