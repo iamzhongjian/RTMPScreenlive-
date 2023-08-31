@@ -126,6 +126,16 @@ char * put_amf_boolean( char *c,unsigned char *b )
     }
     return c+1;
 }
+//put_amf_boolean太复杂了，这个简单
+char * put_amf_bool( char *c,bool b )//uint8_t b也行
+{
+//    *c++ = AMF_BOOLEAN;//AMF_BOOLEAN占1 Byte
+//    *c++ = b;
+
+    c = put_byte(c,AMF_BOOLEAN);
+    c = put_byte(c,b);
+    return c;
+}
 
 //打印char指针
 void print_char_pointer(char *c,int len){
@@ -251,10 +261,11 @@ ReturnValue CreateMetadata(LPRTMPMetadata lpMetaData)
     p = put_amf_string( p, "stereo" );
 //    p = put_amf_double( p, lpMetaData->nAudioChannels == 1 ? false : true );//double也行，拉流端解析为double就行
 //    p = put_amf_boolean( p, lpMetaData->nAudioChannels == 1 ? (unsigned char *)0 : (unsigned char *)1 );//ok
-    *p++ = AMF_BOOLEAN;
-//    *p++ = lpMetaData->nAudioChannels == 1 ? false : true;//ok
-//    *p++ = lpMetaData->nAudioChannels == 1 ? 0 : 1;//ok
-    *p++ = lpMetaData->nAudioChannels == 1 ? 0x00 : 0x01;
+    p = put_amf_bool( p, lpMetaData->nAudioChannels == 1 ? false : true );//ok
+//    *p++ = AMF_BOOLEAN;
+////    *p++ = lpMetaData->nAudioChannels == 1 ? false : true;//ok
+////    *p++ = lpMetaData->nAudioChannels == 1 ? 0 : 1;//ok
+//    *p++ = lpMetaData->nAudioChannels == 1 ? 0x00 : 0x01;//ok
 
     p = put_amf_string( p, "audiocodecid" );
     p = put_amf_double( p, FLV_CODECID_AAC );
